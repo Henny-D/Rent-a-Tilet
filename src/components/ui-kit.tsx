@@ -156,14 +156,14 @@ export function SignaturePad({ label, value, onChange }: { label: string; value?
         onPointerDown={(e) => {
           drawing.current = true;
           const ctx = ref.current!.getContext("2d")!;
-          const [x, y] = pos(e);
+          const [x = 0, y = 0] = pos(e);
           ctx.beginPath();
           ctx.moveTo(x, y);
         }}
         onPointerMove={(e) => {
           if (!drawing.current) return;
           const ctx = ref.current!.getContext("2d")!;
-          const [x, y] = pos(e);
+          const [x = 0, y = 0] = pos(e);
           ctx.lineTo(x, y);
           ctx.stroke();
         }}
@@ -191,7 +191,7 @@ export function MonthCalendar({
 }: {
   blocked: string[];
   onToggle?: (d: string) => void;
-  selected?: string;
+  selected?: string | undefined;
   onPick?: (d: string) => void;
   mode: "block" | "pick";
 }) {

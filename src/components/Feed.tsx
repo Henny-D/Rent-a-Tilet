@@ -6,7 +6,7 @@ import { DressCard, Pill } from "./ui-kit";
 export function Feed({ title, eyebrow, limit }: { title: string; eyebrow: string; limit?: number }) {
   const dresses = useStore((s) => s.dresses);
   const [cat, setCat] = useState<string>("All");
-  const [hood, setHood] = useState(NEIGHBORHOODS[0]);
+  const [hood, setHood] = useState(NEIGHBORHOODS[0]!);
   const [q, setQ] = useState("");
   const [sort, setSort] = useState<"distance" | "price" | "rating">("distance");
   const [showSort, setShowSort] = useState(false);
