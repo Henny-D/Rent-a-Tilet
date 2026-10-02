@@ -10,33 +10,91 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as BrowseRouteImport } from './routes/browse'
+import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as ListRouteImport } from './routes/list'
+import { Route as DressIdRouteImport } from './routes/dress.$id'
+import { Route as RentalIdRouteImport } from './routes/rental.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BrowseRoute = BrowseRouteImport.update({
+  id: '/browse',
+  path: '/browse',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ListRoute = ListRouteImport.update({
+  id: '/list',
+  path: '/list',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DressIdRoute = DressIdRouteImport.update({
+  id: '/dress/$id',
+  path: '/dress/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RentalIdRoute = RentalIdRouteImport.update({
+  id: '/rental/$id',
+  path: '/rental/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/browse': typeof BrowseRoute
+  '/dashboard': typeof DashboardRoute
+  '/list': typeof ListRoute
+  '/dress/$id': typeof DressIdRoute
+  '/rental/$id': typeof RentalIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/browse': typeof BrowseRoute
+  '/dashboard': typeof DashboardRoute
+  '/list': typeof ListRoute
+  '/dress/$id': typeof DressIdRoute
+  '/rental/$id': typeof RentalIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/browse': typeof BrowseRoute
+  '/dashboard': typeof DashboardRoute
+  '/list': typeof ListRoute
+  '/dress/$id': typeof DressIdRoute
+  '/rental/$id': typeof RentalIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    '/' | '/browse' | '/dashboard' | '/list' | '/dress/$id' | '/rental/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/browse' | '/dashboard' | '/list' | '/dress/$id' | '/rental/$id'
+  id:
+    | '__root__'
+    | '/'
+    | '/browse'
+    | '/dashboard'
+    | '/list'
+    | '/dress/$id'
+    | '/rental/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  BrowseRoute: typeof BrowseRoute
+  DashboardRoute: typeof DashboardRoute
+  ListRoute: typeof ListRoute
+  DressIdRoute: typeof DressIdRoute
+  RentalIdRoute: typeof RentalIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +106,51 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/browse': {
+      id: '/browse'
+      path: '/browse'
+      fullPath: '/browse'
+      preLoaderRoute: typeof BrowseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/list': {
+      id: '/list'
+      path: '/list'
+      fullPath: '/list'
+      preLoaderRoute: typeof ListRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dress/$id': {
+      id: '/dress/$id'
+      path: '/dress/$id'
+      fullPath: '/dress/$id'
+      preLoaderRoute: typeof DressIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/rental/$id': {
+      id: '/rental/$id'
+      path: '/rental/$id'
+      fullPath: '/rental/$id'
+      preLoaderRoute: typeof RentalIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  BrowseRoute: BrowseRoute,
+  DashboardRoute: DashboardRoute,
+  ListRoute: ListRoute,
+  DressIdRoute: DressIdRoute,
+  RentalIdRoute: RentalIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
