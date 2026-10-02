@@ -47,9 +47,9 @@ export type Dress = {
 export type Audit = {
   checklist: Record<string, "ok" | "issue">;
   notes: string;
-  photo?: string;
-  lenderSig?: string;
-  renterSig?: string;
+  photo?: string | undefined;
+  lenderSig?: string | undefined;
+  renterSig?: string | undefined;
   outcome?: "confirmed" | "disputed";
 };
 

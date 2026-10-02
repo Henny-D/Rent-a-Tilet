@@ -112,7 +112,7 @@ export function DressCard({ d }: { d: Dress }) {
   );
 }
 
-export function SignaturePad({ label, value, onChange }: { label: string; value?: string; onChange: (v?: string) => void }) {
+export function SignaturePad({ label, value, onChange }: { label: string; value?: string | undefined; onChange: (v?: string) => void }) {
   const ref = useRef<HTMLCanvasElement>(null);
   const drawing = useRef(false);
   useEffect(() => {
