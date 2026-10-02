@@ -59,7 +59,7 @@ function ListPage() {
     setErr(e);
     if (e) return;
     if (step < 4) return setStep(step + 1);
-    const ordered = [photos[cover], ...photos.filter((_, i) => i !== cover)];
+    const ordered = [photos[cover]!, ...photos.filter((_, i) => i !== cover)];
     const id = uid();
     actions.addDress({
       id, title: f.title.trim(), category: f.category, tilet: f.tilet, neighborhood: f.neighborhood,
@@ -170,7 +170,7 @@ function ListPage() {
             </Field>
             <div className="grid grid-cols-2 gap-5">
               {(["bust", "waist", "hip", "length"] as const).map((k) => (
-                <Field key={k} label={`${k[0].toUpperCase() + k.slice(1)} (cm)${k === "hip" ? " · optional" : ""}`}>
+                <Field key={k} label={`${k.charAt(0).toUpperCase() + k.slice(1)} (cm)${k === "hip" ? " · optional" : ""}`}>
                   <input type="number" min={0} max={250} className={inputCls} value={f[k]} onChange={up(k)} />
                 </Field>
               ))}
