@@ -30,7 +30,7 @@ function ListPage() {
   const [drag, setDrag] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const [f, setF] = useState({
-    title: "", category: "Habesha Kemis" as Category, tilet: TILET_STYLES[0], neighborhood: "Bole", description: "",
+    title: "", category: "Habesha Kemis" as Category, tilet: "Gold Menen", neighborhood: "Bole", description: "",
     size: "M", bust: "", waist: "", hip: "", length: "", fee: "3000", retail: "20000", deposit: "10000",
   });
   const [blocked, setBlocked] = useState<string[]>([]);
