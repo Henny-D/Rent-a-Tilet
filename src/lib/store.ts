@@ -41,7 +41,7 @@ export type Dress = {
   blocked: string[];
   lender: string;
   mine?: boolean;
-  status: "review" | "live";
+  status: "review" | "live" | "rejected";
 };
 
 export type Audit = {
@@ -72,6 +72,10 @@ export type Booking = {
   createdAt: string;
   handover?: Audit;
   ret?: Audit;
+  payVerified?: boolean;
+  payoutDone?: boolean;
+  refundDone?: boolean;
+  resolution?: string;
 };
 
 const seed: Dress[] = [
@@ -130,6 +134,8 @@ export const actions = {
     set((s) => ({ ...s, favorites: s.favorites.includes(id) ? s.favorites.filter((f) => f !== id) : [...s.favorites, id] })),
   addDress: (d: Dress) => set((s) => ({ ...s, dresses: [d, ...s.dresses] })),
   removeDress: (id: string) => set((s) => ({ ...s, dresses: s.dresses.filter((d) => d.id !== id) })),
+  setDressStatus: (id: string, status: Dress["status"]) =>
+    set((s) => ({ ...s, dresses: s.dresses.map((d) => (d.id === id ? { ...d, status } : d)) })),
   addBooking: (b: Booking) => set((s) => ({ ...s, bookings: [b, ...s.bookings] })),
   updateBooking: (id: string, patch: Partial<Booking>) =>
     set((s) => ({ ...s, bookings: s.bookings.map((b) => (b.id === id ? { ...b, ...patch } : b)) })),
