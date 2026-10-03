@@ -36,7 +36,7 @@ function Dashboard() {
   return (
     <main className="mx-auto max-w-6xl px-5 pb-40 pt-8">
       <h1 className="font-serif text-5xl text-primary">Good {hour < 12 ? "morning" : hour < 18 ? "afternoon" : "evening"}</h1>
-      <p className="mt-2 text-muted-foreground">Keep track of your rentals, listings, and earnings.</p>
+      <p className="mt-2 text-muted-foreground">Keep track of your rentals, listings, and earnings. <Link to="/admin" className="font-medium text-primary underline">Operator console</Link></p>
 
       <div className="-mx-5 mt-8 flex gap-3 overflow-x-auto px-5">{TABS.map((t) => <Pill key={t} active={tab === t} onClick={() => setTab(t)}>{t}</Pill>)}</div>
 
