@@ -1,7 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, type ReactNode } from "react";
-import { actions, etb, LENDER_SHARE, PLATFORM_FEE, useStore, type Booking } from "@/lib/store";
-import { Card, Pill, btnPrimary, btnGhost, inputCls } from "@/components/ui-kit";
+import { useServerFn } from "@tanstack/react-start";
+import { Camera, Sparkles, X } from "lucide-react";
+import { actions, etb, fileToDataUrl, LENDER_SHARE, PLATFORM_FEE, useStore, type Booking } from "@/lib/store";
+import { Card, Pill, btnPrimary, btnGhost, btnGold, inputCls } from "@/components/ui-kit";
+import { cn } from "@/lib/utils";
+import { analyzeDispute, type DisputeAnalysis } from "@/lib/dispute-ai.functions";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -93,19 +97,87 @@ function Admin() {
   );
 }
 
+const CHECKS = [["hem", "Hem intact"], ["tilet", "Tilet embroidery intact"], ["stains", "Free of stains"], ["zipper", "Zipper & closures work"]] as const;
+
 function Dispute({ b, row }: { b: Booking; row: (b: Booking, r: ReactNode, e?: ReactNode) => ReactNode }) {
+  const dress = useStore((s) => s.dresses.find((d) => d.id === b.dressId));
+  const analyze = useServerFn(analyzeDispute);
   const [note, setNote] = useState("");
   const [keep, setKeep] = useState("0");
+  const [opCheck, setOpCheck] = useState<Record<string, "ok" | "issue">>({});
+  const [opNotes, setOpNotes] = useState("");
+  const [opPhotos, setOpPhotos] = useState<string[]>([]);
+  const [busy, setBusy] = useState(false);
+  const [aiErr, setAiErr] = useState("");
+  const [ai, setAi] = useState<DisputeAnalysis | null>(null);
   const audit = b.ret ?? b.handover;
   const issues = audit ? Object.entries(audit.checklist).filter(([, v]) => v === "issue").map(([k]) => k) : [];
   const amt = Math.max(0, Math.min(b.deposit, Number(keep) || 0));
   const resolve = () => actions.updateBooking(b.id, {
     status: "completed", refundDone: amt >= b.deposit, resolution: `${note.trim().slice(0, 300)} (lender kept ${etb(amt)} of deposit)`,
   });
+  const run = async () => {
+    setBusy(true); setAiErr("");
+    const audits = [
+      b.handover && { stage: "Handover record (signed by both parties)", checklist: b.handover.checklist, notes: b.handover.notes, photos: b.handover.photo ? [b.handover.photo] : [] },
+      b.ret && { stage: "Return record", checklist: b.ret.checklist, notes: b.ret.notes, photos: b.ret.photo ? [b.ret.photo] : [] },
+      { stage: "Operator findings", checklist: opCheck, notes: opNotes, photos: opPhotos },
+    ].filter(Boolean) as { stage: string; checklist: Record<string, string>; notes: string; photos: string[] }[];
+    try {
+      const r = await analyze({ data: { dress: dress?.title ?? "Dress", fee: b.fee, deposit: b.deposit, audits } });
+      if (r.ok) setAi(r.result); else setAiErr(r.error);
+    } catch { setAiErr("Couldn't reach the AI. Please try again."); }
+    setBusy(false);
+  };
   return row(b, <button className={btnPrimary} disabled={!note.trim()} onClick={resolve}>Resolve & release</button>, (
-    <div className="mt-3 space-y-2">
+    <div className="mt-3 space-y-3">
       <div className="text-sm">Flagged at {b.ret ? "return" : "handover"}: {issues.join(", ") || "no checklist issues"}{audit?.notes && ` — “${audit.notes}”`}</div>
       {audit?.photo && <img src={audit.photo} alt="Meetup" className="h-24 rounded-xl object-cover" />}
+
+      <div className="space-y-2 rounded-2xl border border-border p-4">
+        <div className="eyebrow">Operator evidence</div>
+        {CHECKS.map(([k, label]) => (
+          <div key={k} className="flex items-center justify-between text-sm">
+            <span>{label}</span>
+            <div className="flex gap-2">
+              {(["ok", "issue"] as const).map((v) => (
+                <button key={v} onClick={() => setOpCheck({ ...opCheck, [k]: v })}
+                  className={cn("rounded-full border px-3 py-1 text-xs", opCheck[k] === v ? (v === "ok" ? "border-primary bg-primary text-primary-foreground" : "border-destructive bg-destructive text-destructive-foreground") : "border-border")}>
+                  {v === "ok" ? "Good" : "Issue"}
+                </button>
+              ))}
+            </div>
+          </div>
+        ))}
+        <textarea className={inputCls} rows={2} maxLength={1000} placeholder="Operator notes (calls with both parties, observations…)" value={opNotes} onChange={(e) => setOpNotes(e.target.value)} />
+        <div className="flex flex-wrap items-center gap-2">
+          {opPhotos.map((p, i) => (
+            <button key={i} onClick={() => setOpPhotos(opPhotos.filter((_, j) => j !== i))} className="relative" aria-label="Remove photo">
+              <img src={p} alt="" className="h-16 w-12 rounded-lg object-cover" /><X className="absolute -right-1 -top-1 h-4 w-4 rounded-full bg-card" />
+            </button>
+          ))}
+          {opPhotos.length < 4 && (
+            <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-dashed border-gold px-3 py-2 text-sm">
+              <Camera className="h-4 w-4" />Add meetup photo
+              <input type="file" accept="image/*" hidden onChange={async (e) => { const f = e.target.files?.[0]; if (f) setOpPhotos([...opPhotos, await fileToDataUrl(f)]); e.target.value = ""; }} />
+            </label>
+          )}
+        </div>
+        <button className={btnGold} disabled={busy} onClick={run}>
+          <Sparkles className="mr-1 inline h-4 w-4" />{busy ? "Reviewing evidence…" : "Summarize & suggest split"}
+        </button>
+        {aiErr && <p className="text-sm text-destructive">{aiErr}</p>}
+        {ai && (
+          <div className="space-y-2 rounded-xl bg-secondary/40 p-3 text-sm">
+            <p>{ai.summary}</p>
+            <p className="font-medium text-primary">Suggested: lender keeps {etb(ai.lenderKeeps)}, renter gets {etb(b.deposit - ai.lenderKeeps)} back.</p>
+            <p className="text-muted-foreground">{ai.rationale}</p>
+            <button className={btnGhost} onClick={() => { setKeep(String(ai.lenderKeeps)); if (!note.trim()) setNote(ai.rationale.slice(0, 300)); }}>Use suggestion</button>
+            <p className="text-xs text-muted-foreground">AI suggestion only — the operator makes the final decision.</p>
+          </div>
+        )}
+      </div>
+
       <input className={inputCls} placeholder="Mediation decision" value={note} maxLength={300} onChange={(e) => setNote(e.target.value)} />
       <input className={inputCls} type="number" min={0} max={b.deposit} placeholder="Deposit amount awarded to lender" value={keep} onChange={(e) => setKeep(e.target.value)} />
     </div>
