@@ -14,8 +14,8 @@ function runIdFetch() {
   };
 }
 
-export async function runDisputeModel(messages: ModelMessage[]) {
-  const apiKey = process.env.LOVABLE_API_KEY;
+export async function runDisputeModel(system: string, messages: ModelMessage[]) {
+  const apiKey = process.env['LOVABLE_API_KEY'];
   if (!apiKey) throw new Error("AI is not configured.");
   const provider = createOpenAI({
     baseURL: "https://ai.gateway.lovable.dev/v1",
@@ -26,6 +26,7 @@ export async function runDisputeModel(messages: ModelMessage[]) {
   let failure: unknown;
   const result = streamText({
     model: provider.responses("openai/gpt-6-astra"),
+    system,
     messages,
     onError: ({ error }) => { failure = error; },
     providerOptions: {
@@ -38,7 +39,8 @@ export async function runDisputeModel(messages: ModelMessage[]) {
       },
     },
   });
-  const text = await result.text.catch((e) => { failure ??= e; return ""; });
+  let text = "";
+  try { text = await result.text; } catch (e) { failure ??= e; }
   if (failure || !text.trim()) {
     const e = failure as { statusCode?: number; message?: string } | undefined;
     const s = e?.statusCode;
