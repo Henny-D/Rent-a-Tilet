@@ -1,4 +1,6 @@
 import { useSyncExternalStore } from "react";
+import type { User } from "@supabase/supabase-js";
+import { supabase } from "@/integrations/supabase/client";
 import d1 from "@/assets/dress1.jpg";
 import d2 from "@/assets/dress2.jpg";
 import d3 from "@/assets/dress3.jpg";
@@ -16,6 +18,7 @@ export const NEIGHBORHOODS = [
   { name: "Megenagna", km: 3.7 },
   { name: "Old Airport", km: 4.9 },
 ];
+export const SUB_CITIES = ["Addis Ketema", "Akaky Kaliti", "Arada", "Bole", "Gullele", "Kirkos", "Kolfe Keranio", "Lideta", "Nifas Silk-Lafto", "Yeka", "Lemi Kura"];
 export const LENDER_SHARE = 0.75;
 export const PLATFORM_FEE = 0.25;
 export const RENTAL_DAYS = 4;
@@ -40,6 +43,7 @@ export type Dress = {
   description: string;
   blocked: string[];
   lender: string;
+  ownerId?: string | null;
   mine?: boolean;
   status: "review" | "live" | "rejected";
 };
@@ -53,16 +57,13 @@ export type Audit = {
   outcome?: "confirmed" | "disputed";
 };
 
-export type BookingStatus =
-  | "awaiting_payment"
-  | "paid"
-  | "handed_over"
-  | "completed"
-  | "disputed";
+export type BookingStatus = "awaiting_payment" | "paid" | "handed_over" | "completed" | "disputed";
 
 export type Booking = {
   id: string;
   dressId: string;
+  renterId: string;
+  lenderId: string | null;
   startDate: string;
   fee: number;
   deposit: number;
@@ -70,75 +71,159 @@ export type Booking = {
   payRef: string;
   status: BookingStatus;
   createdAt: string;
-  handover?: Audit;
-  ret?: Audit;
+  handover?: Audit | undefined;
+  ret?: Audit | undefined;
   payVerified?: boolean;
   payoutDone?: boolean;
   refundDone?: boolean;
-  resolution?: string;
+  resolution?: string | undefined;
 };
 
-const seed: Dress[] = [
-  { id: "saba", title: "Saba Gold Kemis", category: "Habesha Kemis", tilet: "Gold Menen", neighborhood: "Bole", distanceKm: 0.8, fee: 3000, retail: 22000, deposit: 10000, rating: 4.9, photos: [d1], size: "M", bust: "88", waist: "70", hip: "96", length: "150", description: "Hand-woven shemma cotton with gold menen tilet. Worn once for a melse.", blocked: [], lender: "Meron T.", status: "live" },
-  { id: "zahra", title: "Zahra Emerald Set", category: "Wedding Guest", tilet: "Tibeb Geometric", neighborhood: "Kazanchis", distanceKm: 1.2, fee: 2500, retail: 18000, deposit: 8000, rating: 4.8, photos: [d2], size: "S", bust: "84", waist: "66", hip: "92", length: "148", description: "Emerald green with geometric gold tibeb, includes netela.", blocked: [], lender: "Liya A.", status: "live" },
-  { id: "liya", title: "Liya Evening Dress", category: "Cocktail", tilet: "None", neighborhood: "Bole", distanceKm: 1.7, fee: 2200, retail: 14000, deposit: 6000, rating: 5.0, photos: [d3], size: "M", bust: "90", waist: "72", hip: "98", length: "110", description: "Burgundy pleated chiffon, knee length. Perfect for evening parties.", blocked: [], lender: "Hiwot G.", status: "live" },
-  { id: "selam", title: "Selam Formal Teal", category: "Formal", tilet: "Axum Cross", neighborhood: "Sarbet", distanceKm: 2.1, fee: 3500, retail: 26000, deposit: 12000, rating: 4.7, photos: [d4], size: "L", bust: "96", waist: "78", hip: "104", length: "152", description: "Teal silk-cotton blend with Axum cross tilet panel.", blocked: [], lender: "Selam K.", status: "live" },
-];
+export type Profile = { id: string; full_name: string; phone: string; telegram: string; city: string; sub_city: string; neighborhood: string };
 
-type State = { dresses: Dress[]; favorites: string[]; bookings: Booking[] };
-let state: State = { dresses: seed, favorites: [], bookings: [] };
+type State = {
+  ready: boolean;
+  user: User | null;
+  profile: Profile | null;
+  isAdmin: boolean;
+  dresses: Dress[];
+  favorites: string[];
+  bookings: Booking[];
+  people: Record<string, Profile>;
+};
+const empty: State = { ready: false, user: null, profile: null, isAdmin: false, dresses: [], favorites: [], bookings: [], people: {} };
+let state: State = empty;
 const listeners = new Set<() => void>();
-const KEY = "rent-a-tilet-v1";
-let hydrated = false;
-
-function persist() {
-  try {
-    localStorage.setItem(
-      KEY,
-      JSON.stringify({ mine: state.dresses.filter((d) => d.mine), favorites: state.favorites, bookings: state.bookings }),
-    );
-  } catch (e) {
-    console.warn("Could not save", e);
-  }
-}
-function set(fn: (s: State) => State) {
-  state = fn(state);
-  persist();
+function set(patch: Partial<State>) {
+  state = { ...state, ...patch };
   listeners.forEach((l) => l());
 }
+
+const ASSETS: Record<string, string> = { "asset:dress1": d1, "asset:dress2": d2, "asset:dress3": d3, "asset:dress4": d4 };
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const toDress = (r: any, uid?: string): Dress => ({
+  id: r.id, title: r.title, category: r.category, tilet: r.tilet, neighborhood: r.neighborhood, distanceKm: Number(r.distance_km),
+  fee: r.fee, retail: r.retail, deposit: r.deposit, rating: Number(r.rating), photos: (r.photos as string[]).map((p) => ASSETS[p] ?? p),
+  size: r.size, bust: r.bust, waist: r.waist, hip: r.hip, length: r.length, description: r.description, blocked: r.blocked,
+  lender: r.lender, ownerId: r.owner_id, mine: !!uid && r.owner_id === uid, status: r.status,
+});
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const toBooking = (r: any): Booking => ({
+  id: r.id, dressId: r.dress_id, renterId: r.renter_id, lenderId: r.lender_id, startDate: r.start_date, fee: r.fee, deposit: r.deposit,
+  method: r.method, payRef: r.pay_ref, status: r.status, createdAt: r.created_at, handover: r.handover ?? undefined, ret: r.ret ?? undefined,
+  payVerified: r.pay_verified, payoutDone: r.payout_done, refundDone: r.refund_done, resolution: r.resolution ?? undefined,
+});
+
+let loading: Promise<void> | null = null;
+export function refresh() {
+  if (loading) return loading;
+  loading = (async () => {
+    const { data: u } = await supabase.auth.getUser();
+    const user = u.user ?? null;
+    const uid = user?.id;
+    const [dr, bk, fav, prof, role] = await Promise.all([
+      supabase.from("dresses").select("*").order("created_at", { ascending: false }),
+      uid ? supabase.from("bookings").select("*").order("created_at", { ascending: false }) : Promise.resolve({ data: [] }),
+      uid ? supabase.from("favorites").select("dress_id") : Promise.resolve({ data: [] }),
+      uid ? supabase.from("profiles").select("*") : Promise.resolve({ data: [] }),
+      uid ? supabase.rpc("has_role", { _user_id: uid, _role: "admin" }) : Promise.resolve({ data: false }),
+    ]);
+    const people = Object.fromEntries(((prof.data ?? []) as Profile[]).map((p) => [p.id, p]));
+    set({
+      ready: true, user, isAdmin: !!role.data, profile: uid ? people[uid] ?? null : null, people,
+      dresses: (dr.data ?? []).map((r) => toDress(r, uid)),
+      bookings: (bk.data ?? []).map(toBooking),
+      favorites: ((fav.data ?? []) as { dress_id: string }[]).map((f) => f.dress_id),
+    });
+  })().finally(() => { loading = null; });
+  return loading;
+}
+
+let hydrated = false;
 export function hydrateStore() {
   if (hydrated) return;
   hydrated = true;
-  try {
-    const raw = localStorage.getItem(KEY);
-    if (raw) {
-      const p = JSON.parse(raw);
-      state = { dresses: [...(p.mine ?? []), ...seed], favorites: p.favorites ?? [], bookings: p.bookings ?? [] };
-      listeners.forEach((l) => l());
-    }
-  } catch {
-    /* ignore */
-  }
+  void refresh();
+  supabase.auth.onAuthStateChange((event) => {
+    if (event === "SIGNED_IN" || event === "SIGNED_OUT" || event === "USER_UPDATED") setTimeout(() => void refresh(), 0);
+  });
+  supabase
+    .channel("marketplace")
+    .on("postgres_changes", { event: "*", schema: "public", table: "dresses" }, () => void refresh())
+    .on("postgres_changes", { event: "*", schema: "public", table: "bookings" }, () => void refresh())
+    .subscribe();
+  window.addEventListener("focus", () => void refresh());
 }
-const serverState = state;
+
 export function useStore<T>(sel: (s: State) => T): T {
   return useSyncExternalStore(
     (l) => (listeners.add(l), () => listeners.delete(l)),
     () => sel(state),
-    () => sel(serverState),
+    () => sel(empty),
   );
 }
-export const uid = () => Math.random().toString(36).slice(2, 9);
+
+async function run(p: PromiseLike<{ error: { message: string } | null }>) {
+  const { error } = await p;
+  if (error) {
+    alert(error.message);
+    throw new Error(error.message);
+  }
+  await refresh();
+}
+
+const needUser = () => {
+  const u = state.user;
+  if (!u) throw new Error("Please sign in first.");
+  return u.id;
+};
+
 export const actions = {
-  toggleFav: (id: string) =>
-    set((s) => ({ ...s, favorites: s.favorites.includes(id) ? s.favorites.filter((f) => f !== id) : [...s.favorites, id] })),
-  addDress: (d: Dress) => set((s) => ({ ...s, dresses: [d, ...s.dresses] })),
-  removeDress: (id: string) => set((s) => ({ ...s, dresses: s.dresses.filter((d) => d.id !== id) })),
-  setDressStatus: (id: string, status: Dress["status"]) =>
-    set((s) => ({ ...s, dresses: s.dresses.map((d) => (d.id === id ? { ...d, status } : d)) })),
-  addBooking: (b: Booking) => set((s) => ({ ...s, bookings: [b, ...s.bookings] })),
-  updateBooking: (id: string, patch: Partial<Booking>) =>
-    set((s) => ({ ...s, bookings: s.bookings.map((b) => (b.id === id ? { ...b, ...patch } : b)) })),
+  toggleFav: async (id: string) => {
+    if (!state.user) return void (window.location.href = "/auth");
+    const uid = state.user.id;
+    await run(state.favorites.includes(id)
+      ? supabase.from("favorites").delete().eq("user_id", uid).eq("dress_id", id)
+      : supabase.from("favorites").insert({ user_id: uid, dress_id: id }));
+  },
+  addDress: async (d: Omit<Dress, "id" | "status" | "rating" | "lender">) => {
+    const uid = needUser();
+    const { data, error } = await supabase.from("dresses").insert({
+      owner_id: uid, title: d.title, category: d.category, tilet: d.tilet, neighborhood: d.neighborhood, distance_km: d.distanceKm,
+      fee: d.fee, retail: d.retail, deposit: d.deposit, photos: d.photos, size: d.size, bust: d.bust, waist: d.waist, hip: d.hip,
+      length: d.length, description: d.description, blocked: d.blocked, lender: state.profile?.full_name || "Lender", status: "review",
+    }).select("id").single();
+    if (error) { alert(error.message); throw error; }
+    await refresh();
+    return data.id as string;
+  },
+  removeDress: (id: string) => run(supabase.from("dresses").delete().eq("id", id)),
+  setDressStatus: (id: string, status: Dress["status"]) => run(supabase.from("dresses").update({ status }).eq("id", id)),
+  addBooking: async (b: { dressId: string; startDate: string; method: Booking["method"]; payRef: string }) => {
+    const uid = needUser();
+    const { data, error } = await supabase.from("bookings").insert({
+      dress_id: b.dressId, renter_id: uid, start_date: b.startDate, method: b.method, pay_ref: b.payRef, fee: 0, deposit: 0,
+    }).select("id").single();
+    if (error) { alert(error.message); throw error; }
+    await refresh();
+    return data.id as string;
+  },
+  updateBooking: (id: string, patch: Partial<Booking>) => {
+    const row: Record<string, unknown> = {};
+    if (patch.status !== undefined) row["status"] = patch.status;
+    if (patch.payRef !== undefined) row["pay_ref"] = patch.payRef;
+    if (patch.handover !== undefined) row["handover"] = patch.handover;
+    if (patch.ret !== undefined) row["ret"] = patch.ret;
+    if (patch.payVerified !== undefined) row["pay_verified"] = patch.payVerified;
+    if (patch.payoutDone !== undefined) row["payout_done"] = patch.payoutDone;
+    if (patch.refundDone !== undefined) row["refund_done"] = patch.refundDone;
+    if (patch.resolution !== undefined) row["resolution"] = patch.resolution;
+    return run(supabase.from("bookings").update(row).eq("id", id));
+  },
+  signOut: async () => {
+    await supabase.auth.signOut();
+    window.location.href = "/";
+  },
 };
 
 export const etb = (n: number) => `ETB ${Math.round(n).toLocaleString("en-US")}`;
