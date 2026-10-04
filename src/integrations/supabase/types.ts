@@ -14,16 +14,238 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      bookings: {
+        Row: {
+          created_at: string
+          deposit: number
+          dress_id: string
+          fee: number
+          handover: Json | null
+          id: string
+          lender_id: string | null
+          method: string
+          pay_ref: string
+          pay_verified: boolean
+          payout_done: boolean
+          refund_done: boolean
+          renter_id: string
+          resolution: string | null
+          ret: Json | null
+          start_date: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          deposit: number
+          dress_id: string
+          fee: number
+          handover?: Json | null
+          id?: string
+          lender_id?: string | null
+          method: string
+          pay_ref?: string
+          pay_verified?: boolean
+          payout_done?: boolean
+          refund_done?: boolean
+          renter_id: string
+          resolution?: string | null
+          ret?: Json | null
+          start_date: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          deposit?: number
+          dress_id?: string
+          fee?: number
+          handover?: Json | null
+          id?: string
+          lender_id?: string | null
+          method?: string
+          pay_ref?: string
+          pay_verified?: boolean
+          payout_done?: boolean
+          refund_done?: boolean
+          renter_id?: string
+          resolution?: string | null
+          ret?: Json | null
+          start_date?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_dress_id_fkey"
+            columns: ["dress_id"]
+            isOneToOne: false
+            referencedRelation: "dresses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dresses: {
+        Row: {
+          blocked: string[]
+          bust: string
+          category: string
+          created_at: string
+          deposit: number
+          description: string
+          distance_km: number
+          fee: number
+          hip: string
+          id: string
+          lender: string
+          length: string
+          neighborhood: string
+          owner_id: string | null
+          photos: string[]
+          rating: number
+          retail: number
+          size: string
+          status: string
+          tilet: string
+          title: string
+          waist: string
+        }
+        Insert: {
+          blocked?: string[]
+          bust?: string
+          category: string
+          created_at?: string
+          deposit?: number
+          description?: string
+          distance_km?: number
+          fee: number
+          hip?: string
+          id?: string
+          lender?: string
+          length?: string
+          neighborhood: string
+          owner_id?: string | null
+          photos?: string[]
+          rating?: number
+          retail?: number
+          size?: string
+          status?: string
+          tilet?: string
+          title: string
+          waist?: string
+        }
+        Update: {
+          blocked?: string[]
+          bust?: string
+          category?: string
+          created_at?: string
+          deposit?: number
+          description?: string
+          distance_km?: number
+          fee?: number
+          hip?: string
+          id?: string
+          lender?: string
+          length?: string
+          neighborhood?: string
+          owner_id?: string | null
+          photos?: string[]
+          rating?: number
+          retail?: number
+          size?: string
+          status?: string
+          tilet?: string
+          title?: string
+          waist?: string
+        }
+        Relationships: []
+      }
+      favorites: {
+        Row: {
+          dress_id: string
+          user_id: string
+        }
+        Insert: {
+          dress_id: string
+          user_id: string
+        }
+        Update: {
+          dress_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "favorites_dress_id_fkey"
+            columns: ["dress_id"]
+            isOneToOne: false
+            referencedRelation: "dresses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          city: string
+          created_at: string
+          full_name: string
+          id: string
+          neighborhood: string
+          phone: string
+          sub_city: string
+          telegram: string
+        }
+        Insert: {
+          city?: string
+          created_at?: string
+          full_name?: string
+          id: string
+          neighborhood?: string
+          phone?: string
+          sub_city?: string
+          telegram?: string
+        }
+        Update: {
+          city?: string
+          created_at?: string
+          full_name?: string
+          id?: string
+          neighborhood?: string
+          phone?: string
+          sub_city?: string
+          telegram?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +372,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "user"],
+    },
   },
 } as const
