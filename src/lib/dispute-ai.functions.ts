@@ -28,7 +28,7 @@ export const analyzeDispute = createServerFn({ method: "POST" })
     }];
     for (const a of data.audits) for (const p of a.photos) if (p.startsWith("data:image/")) content.push({ type: "image", image: p });
     try {
-      const text = await runDisputeModel("You are a neutral mediator for an Ethiopian traditional-dress (habesha kemis / tilet) rental marketplace. Compare the handover record, return record and operator findings, including photos. Damage present at handover is not the renter's fault. Normal wear is not chargeable. Suggest how much of the deposit the lender should keep (0 to the full deposit, whole ETB). Reply with ONLY JSON: {\"summary\": string (3-5 sentences of evidence), \"lenderKeeps\": number, \"rationale\": string (2-3 sentences)}." },
+      const text = await runDisputeModel("You are a neutral mediator for an Ethiopian traditional-dress (habesha kemis / tilet) rental marketplace. Compare the handover record, return record and operator findings, including photos. Damage present at handover is not the renter's fault. Normal wear is not chargeable. Suggest how much of the deposit the lender should keep (0 to the full deposit, whole ETB). Reply with ONLY JSON: {\"summary\": string (3-5 sentences of evidence), \"lenderKeeps\": number, \"rationale\": string (2-3 sentences)}.",
         { role: "user", content },
       ]);
       const m = text.match(/\{[\s\S]*\}/);
