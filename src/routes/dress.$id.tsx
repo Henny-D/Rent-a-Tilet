@@ -1,7 +1,7 @@
 import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { ArrowLeft, Heart, MapPin, ShieldCheck, Star } from "lucide-react";
-import { actions, etb, RENTAL_DAYS, uid, useStore } from "@/lib/store";
+import { actions, etb, RENTAL_DAYS, useStore } from "@/lib/store";
 import { btnGold, Card, Field, inputCls, MonthCalendar } from "@/components/ui-kit";
 import { cn } from "@/lib/utils";
 
@@ -34,14 +34,12 @@ function DressPage() {
   }
   const total = d.fee + d.deposit;
 
-  function book() {
+  const user = useStore((s) => s.user);
+  async function book() {
+    if (!user) return nav({ to: "/auth" });
     if (!start) return setErr("Pick a start date.");
     if (ref && !/^[A-Za-z0-9-]{4,30}$/.test(ref.trim())) return setErr("Transaction reference should be 4–30 letters/numbers.");
-    const bid = uid();
-    actions.addBooking({
-      id: bid, dressId: d!.id, startDate: start, fee: d!.fee, deposit: d!.deposit, method, payRef: ref.trim(),
-      status: ref.trim() ? "paid" : "awaiting_payment", createdAt: new Date().toISOString(),
-    });
+    const bid = await actions.addBooking({ dressId: d!.id, startDate: start, method, payRef: ref.trim() });
     nav({ to: "/rental/$id", params: { id: bid } });
   }
 
@@ -117,7 +115,7 @@ function DressPage() {
             </ol>
             <div className="mt-4"><Field label="Transaction reference (optional now)"><input className={inputCls} value={ref} maxLength={30} onChange={(e) => setRef(e.target.value)} placeholder="e.g. TBR8X2K91" /></Field></div>
             {err && <p className="mt-3 text-sm text-destructive">{err}</p>}
-            <button className={cn(btnGold, "mt-5 w-full")} onClick={book} disabled={d.mine}>{d.mine ? "This is your listing" : "Submit booking request"}</button>
+            <button className={cn(btnGold, "mt-5 w-full")} onClick={book} disabled={d.mine}>{d.mine ? "This is your listing" : !user ? "Sign in to book" : "Submit booking request"}</button>
           </Card>
         </div>
       </div>
