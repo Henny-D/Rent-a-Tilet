@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Heart, Home, LayoutGrid, ListPlus, Search, Star, Bell, ChevronLeft, ChevronRight } from "lucide-react";
+import { Heart, Home, LayoutGrid, ListPlus, Search, Star, ChevronLeft, ChevronRight } from "lucide-react";
 import { useRef, useState, useEffect, type ReactNode } from "react";
 import { actions, etb, useStore, ymd, type Dress, RENTAL_DAYS } from "@/lib/store";
 import { cn } from "@/lib/utils";
@@ -287,4 +287,16 @@ export function RequireAuth({ what, admin, children }: { what: string; admin?: b
     );
   if (admin && !isAdmin) return <div className="p-16 text-center text-muted-foreground">This area is for the operator team only.</div>;
   return <>{children}</>;
+}
+
+function AccountLink() {
+  const user = useStore((s) => s.user);
+  const name = useStore((s) => s.profile?.full_name);
+  if (!user) return <Link to="/auth" className="rounded-full border border-primary px-4 py-2 text-sm font-medium text-primary">Sign in</Link>;
+  return (
+    <div className="flex items-center gap-3 text-sm">
+      <span className="hidden text-primary sm:inline">Selam, {name || "friend"}</span>
+      <button onClick={() => void actions.signOut()} className="rounded-full border border-border px-4 py-2 text-muted-foreground">Sign out</button>
+    </div>
+  );
 }
