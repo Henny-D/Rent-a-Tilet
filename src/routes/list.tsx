@@ -63,7 +63,7 @@ function ListPage() {
     await actions.addDress({
       title: f.title.trim(), category: f.category, tilet: f.tilet, neighborhood: f.neighborhood,
       distanceKm: NEIGHBORHOODS.find((n) => n.name === f.neighborhood)?.km ?? 2, fee, retail: Number(f.retail) || 0,
-      deposit: Number(f.deposit) || 0, rating: 0, photos: ordered, size: f.size, bust: f.bust, waist: f.waist, hip: f.hip,
+      deposit: Number(f.deposit) || 0, photos: ordered, size: f.size, bust: f.bust, waist: f.waist, hip: f.hip,
       length: f.length, description: f.description.trim().slice(0, 500), blocked,
     });
     nav({ to: "/dashboard" });

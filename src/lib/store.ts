@@ -209,7 +209,8 @@ export const actions = {
     return data.id as string;
   },
   updateBooking: (id: string, patch: Partial<Booking>) => {
-    const row: Record<string, unknown> = {};
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const row: Record<string, any> = {};
     if (patch.status !== undefined) row["status"] = patch.status;
     if (patch.payRef !== undefined) row["pay_ref"] = patch.payRef;
     if (patch.handover !== undefined) row["handover"] = patch.handover;
@@ -218,7 +219,7 @@ export const actions = {
     if (patch.payoutDone !== undefined) row["payout_done"] = patch.payoutDone;
     if (patch.refundDone !== undefined) row["refund_done"] = patch.refundDone;
     if (patch.resolution !== undefined) row["resolution"] = patch.resolution;
-    return run(supabase.from("bookings").update(row).eq("id", id));
+    return run(supabase.from("bookings").update(row as never).eq("id", id));
   },
   signOut: async () => {
     await supabase.auth.signOut();
