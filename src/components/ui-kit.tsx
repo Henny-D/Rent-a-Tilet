@@ -274,3 +274,18 @@ export const btnGold =
   "inline-flex items-center justify-center gap-2 rounded-full bg-gold px-6 py-3 font-semibold text-primary shadow-gold transition hover:opacity-90 disabled:opacity-40";
 export const btnGhost =
   "inline-flex items-center justify-center gap-2 rounded-full border border-border bg-card px-6 py-3 font-medium text-primary transition hover:border-primary/40";
+
+export function RequireAuth({ what, admin, children }: { what: string; admin?: boolean; children: ReactNode }) {
+  const { ready, user, isAdmin } = useStore((s) => ({ ready: s.ready, user: s.user, isAdmin: s.isAdmin }));
+  if (!ready) return <div className="p-16 text-center text-muted-foreground">Loading…</div>;
+  if (!user)
+    return (
+      <main className="mx-auto max-w-md px-5 pb-40 pt-16 text-center">
+        <h1 className="font-serif text-4xl text-primary">Sign in to {what}</h1>
+        <p className="mt-2 text-muted-foreground">Your listings, rentals and payouts stay with your account on every device.</p>
+        <Link to="/auth" className={cn(btnGold, "mt-6 inline-block")}>Sign in or create account</Link>
+      </main>
+    );
+  if (admin && !isAdmin) return <div className="p-16 text-center text-muted-foreground">This area is for the operator team only.</div>;
+  return <>{children}</>;
+}
