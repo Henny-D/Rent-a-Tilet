@@ -11,10 +11,7 @@ export function Header() {
         <div className="font-serif text-2xl font-semibold text-primary">Rent a Tilet</div>
         <div className="eyebrow">Addis Ababa</div>
       </Link>
-      <button aria-label="Notifications" className="relative rounded-full p-2 text-primary">
-        <Bell className="h-5 w-5" />
-        <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-gold" />
-      </button>
+      <AccountLink />
     </header>
   );
 }
