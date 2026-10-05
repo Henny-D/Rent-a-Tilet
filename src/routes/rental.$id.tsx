@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { AlertTriangle, Camera, Check, Lock } from "lucide-react";
 import { actions, etb, fileToDataUrl, LENDER_SHARE, useStore, type Audit, type Booking } from "@/lib/store";
-import { btnGhost, btnGold, btnPrimary, Card, Field, inputCls, SignaturePad } from "@/components/ui-kit";
+import { btnGhost, btnGold, btnPrimary, Card, Field, inputCls, RequireAuth, SignaturePad } from "@/components/ui-kit";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/rental/$id")({
@@ -14,7 +14,7 @@ export const Route = createFileRoute("/rental/$id")({
       { property: "og:description", content: "Condition checklist, meetup photos and dual signatures protect lenders and renters." },
     ],
   }),
-  component: RentalPage,
+  component: () => <RequireAuth what="see this rental"><RentalPage /></RequireAuth>,
 });
 
 const STAGES: { key: Booking["status"]; label: string }[] = [
@@ -30,6 +30,8 @@ function RentalPage() {
   const b = useStore((s) => s.bookings.find((x) => x.id === id));
   const d = useStore((s) => s.dresses.find((x) => x.id === b?.dressId));
   const [ref, setRef] = useState("");
+  const uid = useStore((s) => s.user?.id);
+  const people = useStore((s) => s.people);
   if (!b || !d) return <div className="p-10 text-center text-muted-foreground">Rental not found. <Link to="/dashboard" className="underline">Dashboard</Link></div>;
   const idx = STAGES.findIndex((s) => s.key === b.status);
   const end = new Date(b.startDate + "T00:00");
@@ -46,6 +48,9 @@ function RentalPage() {
         </div>
       </div>
 
+      {(() => { const other = uid === b.renterId ? (b.lenderId ? people[b.lenderId] : undefined) : people[b.renterId]; return other ? (
+        <p className="mt-4 text-sm text-muted-foreground">{uid === b.renterId ? "Lender" : "Renter"}: <span className="text-primary">{other.full_name}</span> · {other.phone}{other.telegram && ` · Telegram ${other.telegram}`} · {other.sub_city}, {other.neighborhood}</p>
+      ) : null; })()}
       {b.status === "disputed" ? (
         <div className="mt-6 flex gap-3 rounded-[1.5rem] border border-destructive/40 bg-destructive/10 p-5 text-destructive">
           <Lock className="h-5 w-5 shrink-0" />
@@ -64,7 +69,7 @@ function RentalPage() {
         </ol>
       )}
 
-      {b.status === "awaiting_payment" && (
+      {b.status === "awaiting_payment" && uid === b.renterId && (
         <Card className="mt-8">
           <h2 className="font-serif text-2xl text-primary">Complete your payment</h2>
           <p className="mt-2 text-sm text-muted-foreground">Send {etb(b.fee + b.deposit)} via {b.method} to {b.method === "Telebirr" ? "0911 000 000" : "account 1000 0000 00000"}, then enter the reference.</p>

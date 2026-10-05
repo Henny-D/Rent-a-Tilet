@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const audit = z.object({
   stage: z.string(),
@@ -18,8 +19,11 @@ const input = z.object({
 export type DisputeAnalysis = { summary: string; lenderKeeps: number; rationale: string };
 
 export const analyzeDispute = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d) => input.parse(d))
-  .handler(async ({ data }): Promise<{ ok: true; result: DisputeAnalysis } | { ok: false; error: string }> => {
+  .handler(async ({ data, context }): Promise<{ ok: true; result: DisputeAnalysis } | { ok: false; error: string }> => {
+    const { data: isAdmin } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
+    if (!isAdmin) return { ok: false, error: "Only operators can use dispute review." };
     const { runDisputeModel } = await import("./dispute-ai.server");
     const content: Array<{ type: "text"; text: string } | { type: "image"; image: string }> = [{
       type: "text",

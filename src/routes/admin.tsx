@@ -3,7 +3,7 @@ import { useState, type ReactNode } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Camera, Sparkles, X } from "lucide-react";
 import { actions, etb, fileToDataUrl, LENDER_SHARE, PLATFORM_FEE, useStore, type Booking } from "@/lib/store";
-import { Card, Pill, btnPrimary, btnGhost, btnGold, inputCls } from "@/components/ui-kit";
+import { Card, Pill, btnPrimary, btnGhost, btnGold, inputCls, RequireAuth } from "@/components/ui-kit";
 import { cn } from "@/lib/utils";
 import { analyzeDispute, type DisputeAnalysis } from "@/lib/dispute-ai.functions";
 
@@ -16,14 +16,16 @@ export const Route = createFileRoute("/admin")({
       { property: "og:description", content: "Marketplace operations and analytics for Rent a Tilet." },
     ],
   }),
-  component: Admin,
+  component: () => <RequireAuth what="open the operator console" admin><Admin /></RequireAuth>,
 });
 
 const TABS = ["Analytics", "Listing approvals", "Transfer verification", "Lender payouts", "Deposit refunds", "Disputes"] as const;
 
 function Admin() {
   const [tab, setTab] = useState<(typeof TABS)[number]>("Analytics");
-  const { dresses, bookings } = useStore((s) => s);
+  const dresses = useStore((s) => s.dresses);
+  const bookings = useStore((s) => s.bookings);
+  const people = useStore((s) => s.people);
   const byId = Object.fromEntries(dresses.map((d) => [d.id, d]));
   const review = dresses.filter((d) => d.status === "review");
   const toVerify = bookings.filter((b) => b.status !== "awaiting_payment" && b.payRef && !b.payVerified);
@@ -39,6 +41,7 @@ function Admin() {
       <img src={byId[b.dressId]?.photos[0]} alt="" className="h-16 w-12 rounded-xl object-cover" />
       <div className="min-w-0 flex-1">
         <Link to="/rental/$id" params={{ id: b.id }} className="text-primary underline-offset-2 hover:underline">{byId[b.dressId]?.title ?? "Dress"}</Link>
+        <div className="text-sm text-muted-foreground">Renter {people[b.renterId]?.full_name || "—"} {people[b.renterId]?.phone} · Lender {b.lenderId ? people[b.lenderId]?.full_name || "—" : byId[b.dressId]?.lender}</div>
         <div className="text-sm text-muted-foreground">#{b.id} · {b.startDate} · {b.method} {b.payRef && `· Ref ${b.payRef}`}</div>
         {extra}
       </div>
