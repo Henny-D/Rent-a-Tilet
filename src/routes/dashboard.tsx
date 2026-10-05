@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { Check, Clock, CreditCard, PackageCheck, ShieldCheck, Trash2 } from "lucide-react";
 import { actions, etb, LENDER_SHARE, PLATFORM_FEE, useStore } from "@/lib/store";
-import { Card, DressCard, Pill, btnGold } from "@/components/ui-kit";
+import { Card, DressCard, Pill, btnGold, RequireAuth } from "@/components/ui-kit";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/dashboard")({
@@ -14,7 +14,7 @@ export const Route = createFileRoute("/dashboard")({
       { property: "og:description", content: "Your lender earnings and rental activity in one place." },
     ],
   }),
-  component: Dashboard,
+  component: () => <RequireAuth what="see your dashboard"><Dashboard /></RequireAuth>,
 });
 
 const TABS = ["My Listings", "My Rentals", "Saved Dresses", "Transaction History"] as const;
@@ -22,11 +22,17 @@ const LABEL: Record<string, string> = { awaiting_payment: "Awaiting payment", pa
 
 function Dashboard() {
   const [tab, setTab] = useState<(typeof TABS)[number]>("My Listings");
-  const { dresses, bookings, favorites } = useStore((s) => s);
+  const dresses = useStore((s) => s.dresses);
+  const all = useStore((s) => s.bookings);
+  const favorites = useStore((s) => s.favorites);
+  const uid = useStore((s) => s.user?.id);
+  const isAdmin = useStore((s) => s.isAdmin);
+  const bookings = all.filter((b) => b.renterId === uid);
+  const lent = all.filter((b) => b.lenderId === uid);
   const mine = dresses.filter((d) => d.mine);
   const byId = Object.fromEntries(dresses.map((d) => [d.id, d]));
-  const done = bookings.filter((b) => b.status === "completed");
-  const active = bookings.filter((b) => b.status === "paid" || b.status === "handed_over");
+  const done = lent.filter((b) => b.status === "completed");
+  const active = lent.filter((b) => b.status === "paid" || b.status === "handed_over");
   const earned = done.reduce((s, b) => s + b.fee * LENDER_SHARE, 0);
   const pending = active.reduce((s, b) => s + b.fee * LENDER_SHARE, 0);
   const latest = bookings[0];
@@ -36,7 +42,7 @@ function Dashboard() {
   return (
     <main className="mx-auto max-w-6xl px-5 pb-40 pt-8">
       <h1 className="font-serif text-5xl text-primary">Good {hour < 12 ? "morning" : hour < 18 ? "afternoon" : "evening"}</h1>
-      <p className="mt-2 text-muted-foreground">Keep track of your rentals, listings, and earnings. <Link to="/admin" className="font-medium text-primary underline">Operator console</Link></p>
+      <p className="mt-2 text-muted-foreground">Keep track of your rentals, listings, and earnings. {isAdmin && <Link to="/admin" className="font-medium text-primary underline">Operator console</Link>}</p>
 
       <div className="-mx-5 mt-8 flex gap-3 overflow-x-auto px-5">{TABS.map((t) => <Pill key={t} active={tab === t} onClick={() => setTab(t)}>{t}</Pill>)}</div>
 

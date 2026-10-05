@@ -2,9 +2,9 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useRef, useState } from "react";
 import { Check, CloudUpload, Star, X, ShieldCheck } from "lucide-react";
 import {
-  actions, CATEGORIES, etb, fileToDataUrl, LENDER_SHARE, NEIGHBORHOODS, PLATFORM_FEE, TILET_STYLES, uid, type Category,
+  actions, CATEGORIES, etb, fileToDataUrl, LENDER_SHARE, NEIGHBORHOODS, PLATFORM_FEE, TILET_STYLES, type Category,
 } from "@/lib/store";
-import { btnGhost, btnGold, Card, Field, inputCls, MonthCalendar, Pill } from "@/components/ui-kit";
+import { btnGhost, btnGold, Card, Field, inputCls, MonthCalendar, Pill, RequireAuth } from "@/components/ui-kit";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/list")({
@@ -54,23 +54,23 @@ function ListPage() {
     if (step === 3 && Number(f.deposit) < 0) return "Deposit can't be negative.";
     return "";
   }
-  function next() {
+  async function next() {
     const e = validate();
     setErr(e);
     if (e) return;
     if (step < 4) return setStep(step + 1);
     const ordered = [photos[cover]!, ...photos.filter((_, i) => i !== cover)];
-    const id = uid();
-    actions.addDress({
-      id, title: f.title.trim(), category: f.category, tilet: f.tilet, neighborhood: f.neighborhood,
+    await actions.addDress({
+      title: f.title.trim(), category: f.category, tilet: f.tilet, neighborhood: f.neighborhood,
       distanceKm: NEIGHBORHOODS.find((n) => n.name === f.neighborhood)?.km ?? 2, fee, retail: Number(f.retail) || 0,
-      deposit: Number(f.deposit) || 0, rating: 0, photos: ordered, size: f.size, bust: f.bust, waist: f.waist, hip: f.hip,
-      length: f.length, description: f.description.trim().slice(0, 500), blocked, lender: "You", mine: true, status: "review",
+      deposit: Number(f.deposit) || 0, photos: ordered, size: f.size, bust: f.bust, waist: f.waist, hip: f.hip,
+      length: f.length, description: f.description.trim().slice(0, 500), blocked,
     });
     nav({ to: "/dashboard" });
   }
 
   return (
+    <RequireAuth what="list a dress">
     <main className="mx-auto max-w-4xl px-5 pb-40 pt-8">
       <div className="flex items-start justify-between">
         <div>
@@ -219,5 +219,6 @@ function ListPage() {
         </div>
       </Card>
     </main>
+    </RequireAuth>
   );
 }
