@@ -276,7 +276,9 @@ export const btnGhost =
   "inline-flex items-center justify-center gap-2 rounded-full border border-border bg-card px-6 py-3 font-medium text-primary transition hover:border-primary/40";
 
 export function RequireAuth({ what, admin, children }: { what: string; admin?: boolean; children: ReactNode }) {
-  const { ready, user, isAdmin } = useStore((s) => ({ ready: s.ready, user: s.user, isAdmin: s.isAdmin }));
+  const ready = useStore((s) => s.ready);
+  const user = useStore((s) => s.user);
+  const isAdmin = useStore((s) => s.isAdmin);
   if (!ready) return <div className="p-16 text-center text-muted-foreground">Loading…</div>;
   if (!user)
     return (
