@@ -277,6 +277,7 @@ export function RequireAuth({ what, admin, children }: { what: string; admin?: b
   const user = useStore((s) => s.user);
   const isAdmin = useStore((s) => s.isAdmin);
   if (!ready) return <div className="p-16 text-center text-muted-foreground">Loading…</div>;
+  if (!user && admin) return <StaffSignIn />;
   if (!user)
     return (
       <main className="mx-auto max-w-md px-5 pb-40 pt-16 text-center">
@@ -298,5 +299,41 @@ function AccountLink() {
       <span className="hidden text-primary sm:inline">Selam, {name || "friend"}</span>
       <button onClick={() => void actions.signOut()} className="rounded-full border border-border px-4 py-2 text-muted-foreground">Sign out</button>
     </div>
+  );
+}
+
+export function StaffSignIn() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [msg, setMsg] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const signIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setBusy(true); setMsg(null);
+    const { supabase } = await import("@/integrations/supabase/client");
+    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+    setBusy(false);
+    if (error) setMsg(error.message);
+  };
+  const reset = async () => {
+    if (!email.trim()) return setMsg("Enter your email first.");
+    const { supabase } = await import("@/integrations/supabase/client");
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo: `${window.location.origin}/reset-password` });
+    setMsg(error ? error.message : "Check your email for a reset link.");
+  };
+  return (
+    <main className="mx-auto max-w-md px-5 pb-40 pt-16">
+      <p className="text-xs font-semibold uppercase tracking-widest text-accent-foreground/70">Staff only</p>
+      <h1 className="font-serif text-4xl text-primary">Operator console sign in</h1>
+      <p className="mt-2 text-muted-foreground">Sign in with your Master Admin account to approve listings, verify payments and settle disputes.</p>
+      <form onSubmit={signIn} className="mt-6 space-y-3">
+        <input type="email" required placeholder="Staff email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full rounded-xl border border-border bg-card px-4 py-3" />
+        <input type="password" required placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full rounded-xl border border-border bg-card px-4 py-3" />
+        <button disabled={busy} className="w-full rounded-full bg-primary px-5 py-3 font-medium text-primary-foreground disabled:opacity-60">{busy ? "Signing in…" : "Sign in to console"}</button>
+      </form>
+      <button onClick={() => void reset()} className="mt-3 text-sm text-primary underline">Forgot password?</button>
+      {msg && <p className="mt-3 text-sm text-destructive">{msg}</p>}
+      <p className="mt-6 text-sm text-muted-foreground">No Master Admin yet? The first account created becomes it — <Link to="/auth" className="text-primary underline">create your account</Link>.</p>
+    </main>
   );
 }
