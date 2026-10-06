@@ -15,6 +15,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as BrowseRouteImport } from './routes/browse'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ListRouteImport } from './routes/list'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as DressIdRouteImport } from './routes/dress.$id'
 import { Route as RentalIdRouteImport } from './routes/rental.$id'
 
@@ -48,6 +49,11 @@ const ListRoute = ListRouteImport.update({
   path: '/list',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DressIdRoute = DressIdRouteImport.update({
   id: '/dress/$id',
   path: '/dress/$id',
@@ -66,6 +72,7 @@ export interface FileRoutesByFullPath {
   '/browse': typeof BrowseRoute
   '/dashboard': typeof DashboardRoute
   '/list': typeof ListRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/dress/$id': typeof DressIdRoute
   '/rental/$id': typeof RentalIdRoute
 }
@@ -76,6 +83,7 @@ export interface FileRoutesByTo {
   '/browse': typeof BrowseRoute
   '/dashboard': typeof DashboardRoute
   '/list': typeof ListRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/dress/$id': typeof DressIdRoute
   '/rental/$id': typeof RentalIdRoute
 }
@@ -87,6 +95,7 @@ export interface FileRoutesById {
   '/browse': typeof BrowseRoute
   '/dashboard': typeof DashboardRoute
   '/list': typeof ListRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/dress/$id': typeof DressIdRoute
   '/rental/$id': typeof RentalIdRoute
 }
@@ -99,6 +108,7 @@ export interface FileRouteTypes {
     | '/browse'
     | '/dashboard'
     | '/list'
+    | '/reset-password'
     | '/dress/$id'
     | '/rental/$id'
   fileRoutesByTo: FileRoutesByTo
@@ -109,6 +119,7 @@ export interface FileRouteTypes {
     | '/browse'
     | '/dashboard'
     | '/list'
+    | '/reset-password'
     | '/dress/$id'
     | '/rental/$id'
   id:
@@ -119,6 +130,7 @@ export interface FileRouteTypes {
     | '/browse'
     | '/dashboard'
     | '/list'
+    | '/reset-password'
     | '/dress/$id'
     | '/rental/$id'
   fileRoutesById: FileRoutesById
@@ -130,6 +142,7 @@ export interface RootRouteChildren {
   BrowseRoute: typeof BrowseRoute
   DashboardRoute: typeof DashboardRoute
   ListRoute: typeof ListRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   DressIdRoute: typeof DressIdRoute
   RentalIdRoute: typeof RentalIdRoute
 }
@@ -178,6 +191,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ListRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/dress/$id': {
       id: '/dress/$id'
       path: '/dress/$id'
@@ -202,6 +222,7 @@ const rootRouteChildren: RootRouteChildren = {
   BrowseRoute: BrowseRoute,
   DashboardRoute: DashboardRoute,
   ListRoute: ListRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   DressIdRoute: DressIdRoute,
   RentalIdRoute: RentalIdRoute,
 }
