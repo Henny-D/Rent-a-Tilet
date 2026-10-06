@@ -134,7 +134,7 @@ export function refresh() {
     ]);
     const people = Object.fromEntries(((prof.data ?? []) as Profile[]).map((p) => [p.id, p]));
     const byId = new Map<string, Dress>();
-    for (const r of dr.data ?? []) byId.set(r.id, toDress(r, uid));
+    for (const r of dr.data ?? []) byId.set(r.id as string, toDress(r, uid));
     for (const r of (own.data ?? []) as never[]) byId.set((r as { id: string }).id, toDress(r, uid));
     // Operators see every listing (any status) for approvals and analytics.
     if (role.data) {
