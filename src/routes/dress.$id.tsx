@@ -22,20 +22,20 @@ function DressPage() {
   const { id } = Route.useParams();
   const d = useStore((s) => s.dresses.find((x) => x.id === id));
   const fav = useStore((s) => s.favorites.includes(id));
+  const ready = useStore((s) => s.ready);
+  const user = useStore((s) => s.user);
   const nav = useNavigate();
   const [img, setImg] = useState(0);
   const [start, setStart] = useState<string>();
   const [method, setMethod] = useState<"Telebirr" | "CBE Birr">("Telebirr");
   const [ref, setRef] = useState("");
   const [err, setErr] = useState("");
-  const ready = useStore((s) => s.ready);
   if (!d) {
     if (!ready) return <div className="p-10 text-center text-muted-foreground">Loading…</div>;
     return <div className="p-10 text-center text-muted-foreground">Dress not found. <Link to="/browse" className="underline">Browse dresses</Link></div>;
   }
   const total = d.fee + d.deposit;
 
-  const user = useStore((s) => s.user);
   async function book() {
     if (!user) return nav({ to: "/auth" });
     if (!start) return setErr("Pick a start date.");
