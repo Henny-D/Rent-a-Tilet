@@ -105,7 +105,8 @@ const toDress = (r: any, uid?: string): Dress => ({
   id: r.id, title: r.title, category: r.category, tilet: r.tilet, neighborhood: r.neighborhood, distanceKm: Number(r.distance_km),
   fee: r.fee, retail: r.retail, deposit: r.deposit, rating: Number(r.rating), photos: (r.photos as string[]).map((p) => ASSETS[p] ?? p),
   size: r.size, bust: r.bust, waist: r.waist, hip: r.hip, length: r.length, description: r.description, blocked: r.blocked,
-  lender: r.lender, ownerId: r.owner_id, mine: !!uid && r.owner_id === uid, status: r.status,
+  // Public rows come from dresses_public and carry no owner identity.
+  lender: r.lender ?? "Verified lender", ownerId: r.owner_id ?? null, mine: !!uid && r.owner_id === uid, status: r.status,
 });
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const toBooking = (r: any): Booking => ({
@@ -121,17 +122,28 @@ export function refresh() {
     const { data: u } = await supabase.auth.getUser();
     const user = u.user ?? null;
     const uid = user?.id;
-    const [dr, bk, fav, prof, role] = await Promise.all([
-      supabase.from("dresses").select("*").order("created_at", { ascending: false }),
+    const [dr, own, bk, fav, prof, role] = await Promise.all([
+      // Public feed: safe view, no owner identity.
+      supabase.from("dresses_public").select("*").order("created_at", { ascending: false }),
+      // Owner's own listings (any status) — only for the signed-in owner.
+      uid ? supabase.from("dresses").select("*").eq("owner_id", uid) : Promise.resolve({ data: [] }),
       uid ? supabase.from("bookings").select("*").order("created_at", { ascending: false }) : Promise.resolve({ data: [] }),
       uid ? supabase.from("favorites").select("dress_id") : Promise.resolve({ data: [] }),
       uid ? supabase.from("profiles").select("*") : Promise.resolve({ data: [] }),
       uid ? supabase.rpc("has_role", { _user_id: uid, _role: "admin" }) : Promise.resolve({ data: false }),
     ]);
     const people = Object.fromEntries(((prof.data ?? []) as Profile[]).map((p) => [p.id, p]));
+    const byId = new Map<string, Dress>();
+    for (const r of dr.data ?? []) byId.set(r.id as string, toDress(r, uid));
+    for (const r of (own.data ?? []) as never[]) byId.set((r as { id: string }).id, toDress(r, uid));
+    // Operators see every listing (any status) for approvals and analytics.
+    if (role.data) {
+      const all = await supabase.from("dresses").select("*").order("created_at", { ascending: false });
+      for (const r of all.data ?? []) byId.set(r.id, toDress(r, uid));
+    }
     set({
       ready: true, user, isAdmin: !!role.data, profile: uid ? people[uid] ?? null : null, people,
-      dresses: (dr.data ?? []).map((r) => toDress(r, uid)),
+      dresses: [...byId.values()],
       bookings: (bk.data ?? []).map(toBooking),
       favorites: ((fav.data ?? []) as { dress_id: string }[]).map((f) => f.dress_id),
     });
@@ -191,7 +203,7 @@ export const actions = {
     const { data, error } = await supabase.from("dresses").insert({
       owner_id: uid, title: d.title, category: d.category, tilet: d.tilet, neighborhood: d.neighborhood, distance_km: d.distanceKm,
       fee: d.fee, retail: d.retail, deposit: d.deposit, photos: d.photos, size: d.size, bust: d.bust, waist: d.waist, hip: d.hip,
-      length: d.length, description: d.description, blocked: d.blocked, lender: state.profile?.full_name || "Lender", status: "review",
+      length: d.length, description: d.description, blocked: d.blocked, lender: "Verified lender", status: "review",
     }).select("id").single();
     if (error) { alert(error.message); throw error; }
     await refresh();

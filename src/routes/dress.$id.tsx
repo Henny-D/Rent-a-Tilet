@@ -1,4 +1,4 @@
-import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { ArrowLeft, Heart, MapPin, ShieldCheck, Star } from "lucide-react";
 import { actions, etb, RENTAL_DAYS, useStore } from "@/lib/store";
@@ -22,6 +22,8 @@ function DressPage() {
   const { id } = Route.useParams();
   const d = useStore((s) => s.dresses.find((x) => x.id === id));
   const fav = useStore((s) => s.favorites.includes(id));
+  const ready = useStore((s) => s.ready);
+  const user = useStore((s) => s.user);
   const nav = useNavigate();
   const [img, setImg] = useState(0);
   const [start, setStart] = useState<string>();
@@ -29,12 +31,11 @@ function DressPage() {
   const [ref, setRef] = useState("");
   const [err, setErr] = useState("");
   if (!d) {
-    if (typeof window === "undefined") throw notFound();
+    if (!ready) return <div className="p-10 text-center text-muted-foreground">Loading…</div>;
     return <div className="p-10 text-center text-muted-foreground">Dress not found. <Link to="/browse" className="underline">Browse dresses</Link></div>;
   }
   const total = d.fee + d.deposit;
 
-  const user = useStore((s) => s.user);
   async function book() {
     if (!user) return nav({ to: "/auth" });
     if (!start) return setErr("Pick a start date.");
@@ -72,7 +73,7 @@ function DressPage() {
             <div className="mt-2 flex items-center gap-4 text-sm text-muted-foreground">
               <span className="flex items-center gap-1"><MapPin className="h-4 w-4 text-gold" />{d.neighborhood} · {d.distanceKm} km</span>
               <span className="flex items-center gap-1"><Star className="h-4 w-4 fill-gold text-gold" />{d.rating ? d.rating.toFixed(1) : "New"}</span>
-              <span>Lender: {d.lender}</span>
+              <span className="flex items-center gap-1"><ShieldCheck className="h-4 w-4 text-gold" />Verified lender · contact shared after booking</span>
             </div>
             {d.description && <p className="mt-4 text-foreground/80">{d.description}</p>}
           </div>

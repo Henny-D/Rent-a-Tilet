@@ -80,6 +80,13 @@ export type Database = {
             referencedRelation: "dresses"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "bookings_dress_id_fkey"
+            columns: ["dress_id"]
+            isOneToOne: false
+            referencedRelation: "dresses_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       dresses: {
@@ -178,6 +185,13 @@ export type Database = {
             referencedRelation: "dresses"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "favorites_dress_id_fkey"
+            columns: ["dress_id"]
+            isOneToOne: false
+            referencedRelation: "dresses_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       profiles: {
@@ -233,7 +247,75 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      dresses_public: {
+        Row: {
+          blocked: string[] | null
+          bust: string | null
+          category: string | null
+          created_at: string | null
+          deposit: number | null
+          description: string | null
+          distance_km: number | null
+          fee: number | null
+          hip: string | null
+          id: string | null
+          length: string | null
+          neighborhood: string | null
+          photos: string[] | null
+          rating: number | null
+          retail: number | null
+          size: string | null
+          status: string | null
+          tilet: string | null
+          title: string | null
+          waist: string | null
+        }
+        Insert: {
+          blocked?: string[] | null
+          bust?: string | null
+          category?: string | null
+          created_at?: string | null
+          deposit?: number | null
+          description?: string | null
+          distance_km?: number | null
+          fee?: number | null
+          hip?: string | null
+          id?: string | null
+          length?: string | null
+          neighborhood?: string | null
+          photos?: string[] | null
+          rating?: number | null
+          retail?: number | null
+          size?: string | null
+          status?: string | null
+          tilet?: string | null
+          title?: string | null
+          waist?: string | null
+        }
+        Update: {
+          blocked?: string[] | null
+          bust?: string | null
+          category?: string | null
+          created_at?: string | null
+          deposit?: number | null
+          description?: string | null
+          distance_km?: number | null
+          fee?: number | null
+          hip?: string | null
+          id?: string | null
+          length?: string | null
+          neighborhood?: string | null
+          photos?: string[] | null
+          rating?: number | null
+          retail?: number | null
+          size?: string | null
+          status?: string | null
+          tilet?: string | null
+          title?: string | null
+          waist?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       has_role: {
