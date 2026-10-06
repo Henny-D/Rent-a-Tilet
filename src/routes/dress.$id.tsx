@@ -28,8 +28,9 @@ function DressPage() {
   const [method, setMethod] = useState<"Telebirr" | "CBE Birr">("Telebirr");
   const [ref, setRef] = useState("");
   const [err, setErr] = useState("");
+  const ready = useStore((s) => s.ready);
   if (!d) {
-    if (typeof window === "undefined") throw notFound();
+    if (!ready) return <div className="p-10 text-center text-muted-foreground">Loading…</div>;
     return <div className="p-10 text-center text-muted-foreground">Dress not found. <Link to="/browse" className="underline">Browse dresses</Link></div>;
   }
   const total = d.fee + d.deposit;
