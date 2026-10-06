@@ -136,6 +136,11 @@ export function refresh() {
     const byId = new Map<string, Dress>();
     for (const r of dr.data ?? []) byId.set(r.id, toDress(r, uid));
     for (const r of (own.data ?? []) as never[]) byId.set((r as { id: string }).id, toDress(r, uid));
+    // Operators see every listing (any status) for approvals and analytics.
+    if (role.data) {
+      const all = await supabase.from("dresses").select("*").order("created_at", { ascending: false });
+      for (const r of all.data ?? []) byId.set(r.id, toDress(r, uid));
+    }
     set({
       ready: true, user, isAdmin: !!role.data, profile: uid ? people[uid] ?? null : null, people,
       dresses: [...byId.values()],
