@@ -72,7 +72,7 @@ function DressPage() {
             <div className="mt-2 flex items-center gap-4 text-sm text-muted-foreground">
               <span className="flex items-center gap-1"><MapPin className="h-4 w-4 text-gold" />{d.neighborhood} · {d.distanceKm} km</span>
               <span className="flex items-center gap-1"><Star className="h-4 w-4 fill-gold text-gold" />{d.rating ? d.rating.toFixed(1) : "New"}</span>
-              <span>Lender: {d.lender}</span>
+              <span className="flex items-center gap-1"><ShieldCheck className="h-4 w-4 text-gold" />Verified lender · contact shared after booking</span>
             </div>
             {d.description && <p className="mt-4 text-foreground/80">{d.description}</p>}
           </div>

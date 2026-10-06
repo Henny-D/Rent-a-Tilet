@@ -198,7 +198,7 @@ export const actions = {
     const { data, error } = await supabase.from("dresses").insert({
       owner_id: uid, title: d.title, category: d.category, tilet: d.tilet, neighborhood: d.neighborhood, distance_km: d.distanceKm,
       fee: d.fee, retail: d.retail, deposit: d.deposit, photos: d.photos, size: d.size, bust: d.bust, waist: d.waist, hip: d.hip,
-      length: d.length, description: d.description, blocked: d.blocked, lender: state.profile?.full_name || "Lender", status: "review",
+      length: d.length, description: d.description, blocked: d.blocked, lender: "Verified lender", status: "review",
     }).select("id").single();
     if (error) { alert(error.message); throw error; }
     await refresh();
