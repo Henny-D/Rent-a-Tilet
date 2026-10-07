@@ -108,9 +108,9 @@ function DressPage() {
             </div>
             <ol className="mt-4 list-decimal space-y-1 pl-5 text-sm text-foreground/80">
               {method === "Telebirr" ? (
-                <><li>Open Telebirr → Send Money.</li><li>Send <b>{etb(total)}</b> to <b>0911 000 000</b> (Rent a Tilet Escrow).</li></>
+                <><li>Open Telebirr → Send Money.</li><li>Send <b>{etb(total)}</b> to <b>0911 036 221</b> (Henok).</li></>
               ) : (
-                <><li>Open CBE Birr → Transfer.</li><li>Send <b>{etb(total)}</b> to account <b>1000 0000 00000</b> (Rent a Tilet PLC).</li></>
+                <><li>Open CBE Birr → Transfer.</li><li>Send <b>{etb(total)}</b> to account <b>1000 4363 87869</b> (Henok).</li></>
               )}
               <li>Paste the transaction reference below. Funds stay in escrow until the dress is returned.</li>
             </ol>

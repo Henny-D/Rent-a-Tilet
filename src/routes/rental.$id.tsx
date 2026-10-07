@@ -72,7 +72,7 @@ function RentalPage() {
       {b.status === "awaiting_payment" && uid === b.renterId && (
         <Card className="mt-8">
           <h2 className="font-serif text-2xl text-primary">Complete your payment</h2>
-          <p className="mt-2 text-sm text-muted-foreground">Send {etb(b.fee + b.deposit)} via {b.method} to {b.method === "Telebirr" ? "0911 000 000" : "account 1000 0000 00000"}, then enter the reference.</p>
+          <p className="mt-2 text-sm text-muted-foreground">Send {etb(b.fee + b.deposit)} via {b.method} to {b.method === "Telebirr" ? "0911 036 221 (Henok)" : "account 1000 4363 87869 (Henok)"}, then enter the reference.</p>
           <div className="mt-4 flex gap-2">
             <input className={inputCls} value={ref} maxLength={30} onChange={(e) => setRef(e.target.value)} placeholder="Transaction reference" />
             <button className={btnPrimary} disabled={!/^[A-Za-z0-9-]{4,30}$/.test(ref.trim())} onClick={() => actions.updateBooking(b.id, { payRef: ref.trim(), status: "paid" })}>Confirm</button>
